@@ -37,13 +37,12 @@ jobs:
       - name: Instalar Theos y ldid
         run: |
           set -euxo pipefail
-          git clone --recursive https://github.com "$THEOS"
+          git clone --recursive https://github.com/theos/theos.git "$THEOS"
           mkdir -p "$THEOS/sdks"
-          curl -fsSL -o /tmp/sdks.tar.xz https://github.com
+          curl -fsSL -o /tmp/sdks.tar.xz https://github.com/theos/sdks/archive/master.tar.xz
           tar -xf /tmp/sdks.tar.xz -C "$THEOS/sdks" --strip-components=1
           mkdir -p "$THEOS/bin"
-          curl -fsSL -o "$THEOS/bin/ldid" \
-            https://github.com
+          curl -fsSL -o "$THEOS/bin/ldid" https://github.com/ProcursusTeam/ldid/releases/download/v2.1.5-procursus8/ldid_macosx_x86_64
           chmod +x "$THEOS/bin/ldid"
           "$THEOS/bin/ldid" -v
 
