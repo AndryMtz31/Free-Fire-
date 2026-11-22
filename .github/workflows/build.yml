@@ -44,7 +44,7 @@ jobs:
           mkdir -p "$THEOS/bin"
           curl -fsSL -o "$THEOS/bin/ldid" https://github.com/ProcursusTeam/ldid/releases/download/v2.1.5-procursus8/ldid_macosx_x86_64
           chmod +x "$THEOS/bin/ldid"
-          "$THEOS/bin/ldid" -v
+          
 
       - name: Compilar
         env:
