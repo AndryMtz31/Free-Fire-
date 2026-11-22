@@ -31,15 +31,12 @@ jobs:
           which git make xcrun perl || true
           ls -la "$GITHUB_WORKSPACE" || true
 
-      - name: Instalar Theos
-        env:
-          THEOS: ${{ github.workspace }}/theos
+      - name: Instalar Theos y ldid
         run: |
-          set -euxo pipefail
-          git clone --recursive --depth 1 https://github.com/theos/theos.git "$THEOS"
-          echo "$THEOS/bin" >> "$GITHUB_PATH"
-          chmod +x "$THEOS/bin/"* 2>/dev/null || true
-          "$THEOS/bin/ldid" -v || true
+          curl -fsSL -o "$THEOS/bin/ldid" \
+            https://github.com/ProcursusTeam/ldid/releases/download/v2.1.5-procursus8/ldid_macosx_arm64
+          chmod +x "$THEOS/bin/ldid"
+          "$THEOS/bin/ldid" -v
 
       - name: Compilar
         env:
