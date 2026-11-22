@@ -1,0 +1,31 @@
+name: build
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  dylib:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Instalar Theos y SDK
+        run: |
+          brew install ldid xz
+          git clone --recursive https://github.com/theos/theos.git "$HOME/theos"
+          mkdir -p "$HOME/theos/sdks"
+          curl -L -o /tmp/sdk.tar.gz https://github.com/theos/sdks/archive/refs/heads/master.tar.gz
+          tar -xzf /tmp/sdk.tar.gz -C "$HOME/theos/sdks" --strip-components=1
+          echo "THEOS=$HOME/theos" >> "$GITHUB_ENV"
+
+      - name: Compilar
+        run: make package FINALPACKAGE=1
+
+      - name: Publicar dylib
+        uses: actions/upload-artifact@v4
+        with:
+          name: FFAimbot-dylib
+          path: .theos/_/Library/MobileSubstrate/DynamicLibraries/*.dylib
+          if-no-files-found: error
