@@ -11,6 +11,9 @@ concurrency:
   group: build-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  THEOS: ${{ github.workspace }}/theos
+
 jobs:
   dylib:
     runs-on: macos-15-intel
@@ -33,14 +36,19 @@ jobs:
 
       - name: Instalar Theos y ldid
         run: |
+          set -euxo pipefail
+          git clone --recursive https://github.com "$THEOS"
+          mkdir -p "$THEOS/sdks"
+          curl -fsSL -o /tmp/sdks.tar.xz https://github.com
+          tar -xf /tmp/sdks.tar.xz -C "$THEOS/sdks" --strip-components=1
+          mkdir -p "$THEOS/bin"
           curl -fsSL -o "$THEOS/bin/ldid" \
-            https://github.com/ProcursusTeam/ldid/releases/download/v2.1.5-procursus8/ldid_macosx_arm64
+            https://github.com
           chmod +x "$THEOS/bin/ldid"
           "$THEOS/bin/ldid" -v
 
       - name: Compilar
         env:
-          THEOS: ${{ github.workspace }}/theos
           DEBUG: "0"
         run: |
           set -euxo pipefail
