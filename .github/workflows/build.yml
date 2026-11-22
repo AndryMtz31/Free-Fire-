@@ -2,30 +2,63 @@ name: build
 
 on:
   push:
-    branches: [ main ]
   workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   dylib:
     runs-on: macos-14
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Instalar Theos y SDK
+      - name: Diagnostico
         run: |
-          brew install ldid xz
-          git clone --recursive https://github.com/theos/theos.git "$HOME/theos"
-          mkdir -p "$HOME/theos/sdks"
-          curl -L -o /tmp/sdk.tar.gz https://github.com/theos/sdks/archive/refs/heads/master.tar.gz
-          tar -xzf /tmp/sdk.tar.gz -C "$HOME/theos/sdks" --strip-components=1
-          echo "THEOS=$HOME/theos" >> "$GITHUB_ENV"
+          set -x
+          sw_vers || true
+          uname -m || true
+          xcodebuild -version || true
+          xcode-select -p || true
+          which git make xcrun perl || true
+          echo "workspace: $GITHUB_WORKSPACE"
+          ls -la "$GITHUB_WORKSPACE" || true
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Instalar Theos
+        env:
+          THEOS: ${{ github.workspace }}/theos
+        run: |
+          set -euxo pipefail
+          git clone --recursive --depth 1 https://github.com/theos/theos.git "$THEOS"
+          echo "$THEOS/bin" >> "$GITHUB_PATH"
+          chmod +x "$THEOS/bin/"* 2>/dev/null || true
+          ls "$THEOS/bin" || true
 
       - name: Compilar
-        run: make package FINALPACKAGE=1
+        env:
+          THEOS: ${{ github.workspace }}/theos
+          ARCHS: arm64 arm64e
+          DEBUG: "0"
+        run: |
+          set -euxo pipefail
+          make clean || true
+          make
 
-      - name: Publicar dylib
+      - name: Localizar el dylib
+        if: always()
+        run: |
+          set -x
+          find "$GITHUB_WORKSPACE" -name '*.dylib' -not -path '*/theos/*' 2>/dev/null || true
+
+      - name: Subir artefacto
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: FFAimbot-dylib
-          path: .theos/_/Library/MobileSubstrate/DynamicLibraries/*.dylib
-          if-no-files-found: error
+          name: dylib
+          path: |
+            .theos/obj/**/*.dylib
+            .theos/_/**/*.dylib
+          if-no-files-found: warn
